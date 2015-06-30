@@ -7,17 +7,21 @@ function _M.new(self)
     return setmetatable({ memory = shared_memory }, mt)
 end
 
-
-function _M.limit(self, zone, key, parallel, scope)
-	scope = scope or 1
-	local zone_key = zone .. ":" .. key .. ":" .. math.ceil (ngx.time()/scope)
-	self.memory:add(zone_key, 0, 1)
+function _M.reqs_per_range(self, zone, key, requests, range)
+	range = range or 1
+	local zone_key = zone .. ":" .. key .. ":" .. math.ceil (ngx.time()/range)
+	self.memory:add(zone_key, 0, range)
 	local cur_para = self.memory:incr(zone_key, 1)
-	if cur_para > parallel then
-		return true
+	if cur_para > requests then
+		return false
 	end
 	
-	return false
+	return true
+end
+
+function _M.rate( self, rate )
+	ngx.var.limit_rate = rate or "0"
+	return 
 end
 
 return _M
